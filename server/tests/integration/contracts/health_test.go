@@ -11,7 +11,7 @@ import (
 func TestHealthEndpointsRespondWithStableContract(t *testing.T) {
 	t.Parallel()
 
-	server := helpers.NewServer(t, httpapi.NewRouter())
+	server := helpers.NewServer(t, httpapi.NewRouter(httpapi.RouterDeps{}))
 
 	for _, path := range []string{"/healthz", "/api/v1/health"} {
 		response, err := server.Client().Get(server.URL + path)

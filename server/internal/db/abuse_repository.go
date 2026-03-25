@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -35,7 +36,7 @@ func (r *AbuseRepository) Create(ctx context.Context, event abuse.Event) (abuse.
 	`,
 		event.UserID,
 		event.SessionID,
-		event.RequestRunID,
+		event.RequestID,
 		event.Severity,
 		event.Category,
 		event.SourceIP,
@@ -46,20 +47,7 @@ func (r *AbuseRepository) Create(ctx context.Context, event abuse.Event) (abuse.
 	)
 
 	var created abuse.Event
-	if err := row.Scan(
-		&created.ID,
-		&created.UserID,
-		&created.SessionID,
-		&created.RequestRunID,
-		&created.Severity,
-		&created.Category,
-		&created.SourceIP,
-		&created.Target,
-		&created.RuleKey,
-		&created.ActionTaken,
-		&created.Details,
-		&created.CreatedAt,
-	); err != nil {
+	if err := scanAbuseEvent(row.Scan, &created); err != nil {
 		return abuse.Event{}, err
 	}
 
@@ -77,20 +65,7 @@ func (r *AbuseRepository) ListRecent(ctx context.Context, filter abuse.RecentFil
 	items := make([]abuse.Event, 0)
 	for rows.Next() {
 		var item abuse.Event
-		if err := rows.Scan(
-			&item.ID,
-			&item.UserID,
-			&item.SessionID,
-			&item.RequestRunID,
-			&item.Severity,
-			&item.Category,
-			&item.SourceIP,
-			&item.Target,
-			&item.RuleKey,
-			&item.ActionTaken,
-			&item.Details,
-			&item.CreatedAt,
-		); err != nil {
+		if err := scanAbuseEvent(rows.Scan, &item); err != nil {
 			return nil, err
 		}
 		items = append(items, item)
@@ -183,6 +158,56 @@ func buildAbuseRecentQuery(filter abuse.RecentFilter) (string, []any) {
 	builder.WriteString(fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d", len(args)))
 
 	return builder.String(), args
+}
+
+func scanAbuseEvent(scan func(dest ...any) error, item *abuse.Event) error {
+	var userID sql.NullString
+	var sessionID sql.NullString
+	var requestID sql.NullString
+	var sourceIP sql.NullString
+	var target sql.NullString
+	var ruleKey sql.NullString
+
+	if err := scan(
+		&item.ID,
+		&userID,
+		&sessionID,
+		&requestID,
+		&item.Severity,
+		&item.Category,
+		&sourceIP,
+		&target,
+		&ruleKey,
+		&item.ActionTaken,
+		&item.Details,
+		&item.CreatedAt,
+	); err != nil {
+		return err
+	}
+	if userID.Valid {
+		value := userID.String
+		item.UserID = &value
+	}
+	if sessionID.Valid {
+		value := sessionID.String
+		item.SessionID = &value
+	}
+	if requestID.Valid {
+		value := requestID.String
+		item.RequestID = &value
+	}
+	if sourceIP.Valid {
+		value := sourceIP.String
+		item.SourceIP = &value
+	}
+	if target.Valid {
+		value := target.String
+		item.Target = &value
+	}
+	if ruleKey.Valid {
+		item.RuleKey = ruleKey.String
+	}
+	return nil
 }
 
 func buildAbuseSummaryQuery(filter abuse.SummaryFilter) (string, []any) {

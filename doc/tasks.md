@@ -259,6 +259,7 @@ Parallel With:
 
 ### C2. Auth And Sessions
 Owner: `Agent Group C`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Implement signup, login, logout, and session handling.
@@ -271,6 +272,7 @@ Depends on:
 
 ### C3. Collections API
 Owner: `Agent Group C`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - CRUD for collections.
@@ -283,6 +285,7 @@ Depends on:
 
 ### C4. Saved Requests And History API
 Owner: `Agent Group C`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - CRUD for saved requests.
@@ -306,6 +309,7 @@ Depends on:
 
 ### C6. Usage And Abuse Storage
 Owner: `Agent Group C`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Persist usage events, blocked attempts, abuse events, and denylist entries.
@@ -321,6 +325,7 @@ Depends on:
 
 ### D1. Request Runner Core
 Owner: `Agent Group D`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Build the server-side request execution pipeline.
@@ -333,6 +338,7 @@ Depends on:
 
 ### D2. Destination Validation
 Owner: `Agent Group D`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Block localhost, private ranges, metadata IPs, and unsupported protocols.
@@ -356,6 +362,7 @@ Depends on:
 
 ### D4. Rate Limiting Engine
 Owner: `Agent Group D`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Implement IP and user quota enforcement.
@@ -368,6 +375,7 @@ Depends on:
 
 ### D5. Abuse Detection Hooks
 Owner: `Agent Group D`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Log suspicious request patterns.
@@ -512,6 +520,7 @@ Depends on:
 
 ### G2. Application Deployment
 Owner: `Agent Group G`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Add production build and runtime instructions.
@@ -525,6 +534,7 @@ Depends on:
 
 ### G3. Test Harness
 Owner: `Agent Group G`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Add unit and integration test setup.

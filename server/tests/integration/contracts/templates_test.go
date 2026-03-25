@@ -11,7 +11,7 @@ import (
 func TestTemplatesContractIncludesGuestSafeExamples(t *testing.T) {
 	t.Parallel()
 
-	server := helpers.NewServer(t, httpapi.NewRouter())
+	server := helpers.NewServer(t, httpapi.NewRouter(httpapi.RouterDeps{}))
 
 	response, err := server.Client().Get(server.URL + "/api/v1/templates")
 	if err != nil {
