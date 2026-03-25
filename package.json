@@ -1,0 +1,18 @@
+{
+  "name": "api-testing-kit",
+  "private": true,
+  "packageManager": "bun@1.2.19",
+  "scripts": {
+    "dev:web": "bun run --cwd ./apps/web dev",
+    "build:web": "bun run --cwd ./apps/web build",
+    "preview:web": "bun run --cwd ./apps/web preview",
+    "check:web": "bun run --cwd ./apps/web check",
+    "test:web": "bun run --cwd ./apps/web test",
+    "test:web:unit": "bun run --cwd ./apps/web test:unit -- --run",
+    "test:web:e2e": "bun run --cwd ./apps/web test:e2e",
+    "dev:server": "go -C ./server run ./cmd/api",
+    "test:server": "go -C ./server test ./...",
+    "fmt:server": "gofmt -w ./server/cmd ./server/internal",
+    "test": "bun run test:web && bun run test:server"
+  }
+}

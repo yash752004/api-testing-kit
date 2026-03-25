@@ -1,0 +1,30 @@
+# Node / Bun
+node_modules/
+apps/*/node_modules/
+apps/*/.svelte-kit/
+apps/*/build/
+apps/*/.output/
+apps/*/playwright-report/
+apps/*/test-results/
+
+# Go
+server/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.vscode/
+./doc
