@@ -10,11 +10,25 @@ import (
 	"time"
 
 	"api-testing-kit/server/internal/config"
+	"api-testing-kit/server/internal/db"
 	"api-testing-kit/server/internal/httpapi"
 )
 
 func main() {
 	cfg := config.Load()
+	startupCtx, startupCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer startupCancel()
+
+	store, err := db.Open(startupCtx, cfg.DatabaseURL, cfg.DatabaseMaxConns)
+	if err != nil {
+		log.Fatalf("database initialization failed: %v", err)
+	}
+	if store != nil {
+		defer store.Close()
+		log.Printf("database connection ready (max_conns=%d)", cfg.DatabaseMaxConns)
+	} else {
+		log.Print("DATABASE_URL not set; starting API without PostgreSQL")
+	}
 
 	srv := &http.Server{
 		Addr:              ":" + cfg.Port,

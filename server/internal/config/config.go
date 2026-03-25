@@ -1,18 +1,42 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strconv"
+)
 
 type Config struct {
-	Port string
+	Port             string
+	DatabaseURL      string
+	DatabaseMaxConns int32
 }
 
 func Load() Config {
-	port := os.Getenv("API_PORT")
-	if port == "" {
-		port = "8080"
+	return Config{
+		Port:             getEnv("API_PORT", "8080"),
+		DatabaseURL:      os.Getenv("DATABASE_URL"),
+		DatabaseMaxConns: getEnvInt32("DATABASE_MAX_CONNS", 4),
+	}
+}
+
+func getEnv(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
 
-	return Config{
-		Port: port,
+	return fallback
+}
+
+func getEnvInt32(key string, fallback int32) int32 {
+	value := os.Getenv(key)
+	if value == "" {
+		return fallback
 	}
+
+	parsed, err := strconv.ParseInt(value, 10, 32)
+	if err != nil || parsed <= 0 {
+		return fallback
+	}
+
+	return int32(parsed)
 }
