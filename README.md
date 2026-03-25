@@ -80,6 +80,33 @@ Current variables:
 ```bash
 PUBLIC_API_BASE_URL=http://localhost:8080
 API_PORT=8080
+WEB_PORT=4173
+POSTGRES_PORT=5432
+POSTGRES_DB=api_testing_kit
+POSTGRES_USER=api_testing_kit
+POSTGRES_PASSWORD=api_testing_kit_dev
+DATABASE_URL=postgres://api_testing_kit:api_testing_kit_dev@db:5432/api_testing_kit?sslmode=disable
+```
+
+## Local Docker Stack
+
+Start the frontend, Go API, and PostgreSQL with:
+
+```bash
+docker compose up --build
+```
+
+The stack exposes:
+
+- `http://localhost:4173` for the web app
+- `http://localhost:8080` for the Go API
+- `localhost:5432` for PostgreSQL
+
+PostgreSQL bootstrap SQL lives in `docker/postgres/init/001-bootstrap.sql`.
+Goose migrations should be added under `server/migrations`, then run with:
+
+```bash
+docker compose --profile migrations run --rm migrate
 ```
 
 ## Backend Endpoints
