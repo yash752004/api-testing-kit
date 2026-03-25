@@ -115,6 +115,7 @@ Parallel With:
 
 ### A2. shadcn Component Styling Pass
 Owner: `Agent Group A`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Re-theme button, card, badge, input, tabs, dialog, sheet, dropdown, tooltip, separator, scroll area, and table primitives.
@@ -148,6 +149,7 @@ Unblocks:
 
 ### A4. Marketing Layout System
 Owner: `Agent Group A`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Build the landing page layout system that matches the app visual language.
@@ -241,6 +243,7 @@ Depends on:
 
 ### C1. DB Layer And Migrations
 Owner: `Agent Group C`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Connect the app to PostgreSQL using the chosen Go data layer.
@@ -495,6 +498,7 @@ Depends on:
 
 ### G1. Local Dev Environment
 Owner: `Agent Group G`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Docker and Docker Compose setup.
