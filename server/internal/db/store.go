@@ -11,9 +11,12 @@ import (
 )
 
 type Store struct {
-	pool      *pgxpool.Pool
-	Auth      auth.Repository
-	Templates *TemplateRepository
+	pool           *pgxpool.Pool
+	Auth           auth.Repository
+	Templates      *TemplateRepository
+	Usage          *UsageRepository
+	Abuse          *AbuseRepository
+	BlockedTargets *BlockedTargetRepository
 }
 
 func Open(ctx context.Context, databaseURL string, maxConns int32) (*Store, error) {
@@ -52,9 +55,12 @@ func NewStore(pool *pgxpool.Pool) *Store {
 	}
 
 	return &Store{
-		pool:      pool,
-		Auth:      NewAuthRepository(pool),
-		Templates: NewTemplateRepository(pool),
+		pool:           pool,
+		Auth:           NewAuthRepository(pool),
+		Templates:      NewTemplateRepository(pool),
+		Usage:          NewUsageRepository(pool),
+		Abuse:          NewAbuseRepository(pool),
+		BlockedTargets: NewBlockedTargetRepository(pool),
 	}
 }
 
