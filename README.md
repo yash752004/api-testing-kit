@@ -112,6 +112,19 @@ Goose migrations should be added under `server/migrations`, then run with:
 docker compose --profile migrations run --rm migrate
 ```
 
+## Deployment
+
+The deployment order and service boundaries are documented in [`doc/deployment.md`](./doc/deployment.md).
+
+In short:
+
+1. Start PostgreSQL.
+2. Run `migrate` once against the target database.
+3. Start the API after the database is healthy.
+4. Start the web app after the API is healthy.
+
+The compose stack now enforces that order with health checks for `db`, `api`, and `web`.
+
 ## Backend Endpoints
 
 The current Go scaffold exposes:
