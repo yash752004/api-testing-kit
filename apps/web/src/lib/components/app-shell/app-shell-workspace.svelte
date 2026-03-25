@@ -1,312 +1,289 @@
 <script lang="ts">
-	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "$lib/components/ui/card/index.js";
 	import Badge from "$lib/components/ui/badge/badge.svelte";
-	import { Button } from "$lib/components/ui/button/index.js";
+	import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "$lib/components/ui/card/index.js";
+	import GuestAdvancedToolsLock from "$lib/components/workspace/guest-advanced-tools-lock.svelte";
+	import GuestCustomUrlLock from "$lib/components/workspace/guest-custom-url-lock.svelte";
+	import GuestEnvVarsLock from "$lib/components/workspace/guest-env-vars-lock.svelte";
+	import GuestHistoryLock from "$lib/components/workspace/guest-history-lock.svelte";
+	import GuestSaveLock from "$lib/components/workspace/guest-save-lock.svelte";
+	import RequestBuilder from "$lib/components/workspace/request-builder.svelte";
 	import {
-		Tabs,
-		TabsContent,
-		TabsList,
-		TabsTrigger,
-	} from "$lib/components/ui/tabs/index.js";
-	import Separator from "$lib/components/ui/separator/separator.svelte";
-	import PlayIcon from "@lucide/svelte/icons/play";
-	import LockIcon from "@lucide/svelte/icons/lock";
-	import FileJsonIcon from "@lucide/svelte/icons/file-json";
-	import InboxIcon from "@lucide/svelte/icons/inbox";
-	import Clock3Icon from "@lucide/svelte/icons/clock-3";
-	import ShieldIcon from "@lucide/svelte/icons/shield";
-	import LayoutGridIcon from "@lucide/svelte/icons/layout-grid";
-	import ArrowRightIcon from "@lucide/svelte/icons/arrow-right";
+		createDefaultRequestDraft,
+		type RequestBodyMode,
+		type RequestBuilderDraft,
+	} from "$lib/components/workspace/request-builder";
+	import ResponseViewer from "$lib/components/workspace/response-viewer.svelte";
+	import type { ResponseHeader } from "$lib/components/workspace/response-viewer";
+	import TemplateBrowser from "$lib/components/workspace/template-browser.svelte";
+	import { guestWorkspaceState } from "$lib/mocks/workspace-state";
 
-	const requestFields = [
-		{ label: "Method", value: "GET" },
-		{ label: "URL", value: "https://jsonplaceholder.typicode.com/posts/1" },
-		{ label: "Auth", value: "None" },
-	];
+	const guestState = guestWorkspaceState;
+	const primaryTemplate = guestState.templates[0];
 
-	const responseHeaders = [
-		["content-type", "application/json; charset=utf-8"],
-		["cache-control", "max-age=43200"],
-		["x-powered-by", "Express"],
-	];
+	const categoryMap = {
+		"REST basics": "rest-basics",
+		"Authentication flows": "auth-flows",
+		"CRUD examples": "crud",
+		"Pagination examples": "pagination",
+		Webhooks: "webhooks",
+		"Error handling": "error-handling",
+	} as const;
 
-	const prettyResponse = `{
-  "id": 1,
-  "title": "delectus aut autem",
-  "completed": false
-}`;
+	const metricToneClasses = {
+		neutral: "border-border/70 bg-panel-soft text-text-strong",
+		positive: "border-success/20 bg-success/10 text-success",
+		warning: "border-warning/20 bg-warning/10 text-warning",
+		danger: "border-danger/20 bg-danger/10 text-danger",
+	} as const;
 
-	const rawResponse = `{"id":1,"title":"delectus aut autem","completed":false}`;
+	const historyToneClasses = {
+		success: "border-success/20 bg-success/10 text-success",
+		blocked: "border-warning/20 bg-warning/10 text-warning",
+		error: "border-danger/20 bg-danger/10 text-danger",
+	} as const;
+
+	function toRequestBodyMode(mode: string): RequestBodyMode {
+		if (mode === "raw") {
+			return "raw";
+		}
+
+		if (mode === "form-urlencoded") {
+			return "form";
+		}
+
+		return "json";
+	}
+
+	function createTemplateRequestDraft(): RequestBuilderDraft {
+		const draft = createDefaultRequestDraft("guest");
+
+		if (!primaryTemplate) {
+			return draft;
+		}
+
+		draft.method = primaryTemplate.request.method;
+		draft.url = primaryTemplate.request.url;
+		draft.queryParams = primaryTemplate.request.query.map((item) => ({
+			key: item.key,
+			value: item.value,
+			enabled: true,
+		}));
+		draft.headers = primaryTemplate.request.headers.map((item) => ({
+			key: item.key,
+			value: item.value,
+			enabled: true,
+		}));
+
+		const bodyMode = toRequestBodyMode(primaryTemplate.request.bodyMode);
+		draft.body = {
+			...draft.body,
+			mode: bodyMode,
+			value:
+				bodyMode === "json"
+					? '{\n  "template": "' + primaryTemplate.slug + '",\n  "preview": true\n}'
+					: bodyMode === "raw"
+						? "demo-preview-body"
+						: draft.body.value,
+			formRows:
+				bodyMode === "form"
+					? [
+							{ key: "email", value: "guest@example.dev", enabled: true },
+							{ key: "city", value: "Kolkata", enabled: true },
+						]
+					: draft.body.formRows,
+			contentType:
+				bodyMode === "form"
+					? "application/x-www-form-urlencoded"
+					: bodyMode === "raw"
+						? "text/plain"
+						: "application/json",
+		};
+
+		return draft;
+	}
+
+	const requestDraft = createTemplateRequestDraft();
+
+	const responseHeaders: ResponseHeader[] = primaryTemplate
+		? [
+				{ key: "content-type", value: primaryTemplate.request.responseContentType },
+				{ key: "x-guest-mode", value: "allowlisted-template" },
+				{ key: "x-preview-size", value: primaryTemplate.request.responseSizeLabel },
+			]
+		: [];
+
+	const templateBrowserTemplates = guestState.templates.map((template, index) => ({
+		id: template.slug,
+		name: template.title,
+		slug: template.slug,
+		category: categoryMap[template.category],
+		method: template.request.method,
+		endpoint: template.request.url,
+		summary: template.summary,
+		notes: template.description,
+		tags: [...template.tags],
+		featured: index === 0,
+		launchHref: `/app?template=${template.slug}`,
+		previewHref: `/app?template=${template.slug}&mode=preview`,
+	}));
+
+	const templateBrowserCollections = guestState.collections.map((collection) => ({
+		id: collection.id,
+		name: collection.title,
+		slug: collection.id,
+		category: categoryMap[
+			guestState.templateGroups.find((group) => group.templateSlugs.some((slug) => collection.templateSlugs.includes(slug)))
+				?.label ?? "REST basics"
+		],
+		description: collection.description,
+		templateIds: [...collection.templateSlugs],
+		launchHref: `/app?collection=${collection.id}`,
+		previewHref: `/app?collection=${collection.id}&mode=preview`,
+	}));
 </script>
 
-<div class="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-	<Card class="border-border/80 shadow-sm">
-		<CardHeader class="gap-3">
-			<div class="flex items-center justify-between gap-3">
-				<div>
-					<CardTitle>Request builder</CardTitle>
-					<CardDescription>Static shell only. No request execution is wired yet.</CardDescription>
-				</div>
-				<Badge>Guest-safe</Badge>
-			</div>
+<section class="space-y-4">
+	<div class="grid gap-4 xl:grid-cols-[1.18fr_0.95fr]">
+		<RequestBuilder
+			title="Request builder"
+			description={guestState.accessSummary}
+			request={requestDraft}
+			lockedNote={guestState.prompts[0]?.body}
+		/>
 
-			<div class="flex flex-wrap items-center gap-2">
-				{#each requestFields as field}
-					<div class="rounded-full border border-border/70 bg-panel-soft px-3 py-1.5 text-xs">
-						<span class="text-muted-foreground">{field.label}:</span>
-						<span class="ml-1 font-medium text-foreground">{field.value}</span>
-					</div>
-				{/each}
-			</div>
-		</CardHeader>
+		<ResponseViewer
+			title="Response viewer"
+			description="Previewed guest responses stay structured, readable, and visibly constrained."
+			status={primaryTemplate?.request.responseStatus}
+			statusText={primaryTemplate?.request.responseStatusText}
+			duration={primaryTemplate?.request.responseTimeMs}
+			size={primaryTemplate?.request.responseSizeLabel}
+			contentType={primaryTemplate?.request.responseContentType}
+			headers={responseHeaders}
+			prettyBody={primaryTemplate?.request.responseBody}
+			rawBody={primaryTemplate?.request.responseBody}
+		/>
+	</div>
 
-		<CardContent class="space-y-4">
-			<div class="rounded-[22px] border border-border/70 bg-shell p-4">
-				<div class="flex flex-wrap items-center justify-between gap-3">
-					<div class="flex items-center gap-2">
-						<Badge variant="secondary">GET</Badge>
-						<p class="font-mono text-sm text-foreground">/posts/1</p>
-					</div>
-					<Button variant="default" size="sm">
-						<PlayIcon class="size-4" />
-						Send
-					</Button>
-				</div>
+	<div class="grid gap-4 xl:grid-cols-[1.16fr_0.84fr]">
+		<TemplateBrowser
+			title="Guest-safe templates and collections"
+			subtitle={guestState.subtitle}
+			templates={templateBrowserTemplates}
+			collections={templateBrowserCollections}
+		/>
 
-				<div class="mt-4 rounded-2xl border border-border/70 bg-white p-4">
-					<Tabs value="params" class="gap-4">
-						<TabsList>
-							<TabsTrigger value="params">Params</TabsTrigger>
-							<TabsTrigger value="headers">Headers</TabsTrigger>
-							<TabsTrigger value="body">Body</TabsTrigger>
-							<TabsTrigger value="auth">Auth</TabsTrigger>
-						</TabsList>
-
-						<TabsContent value="params" class="space-y-2">
-							<div class="grid grid-cols-[1.1fr_1fr_0.6fr] gap-2 text-xs text-muted-foreground">
-								<span>Key</span>
-								<span>Value</span>
-								<span>State</span>
-							</div>
-							<div class="grid grid-cols-[1.1fr_1fr_0.6fr] gap-2 rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-								<span class="font-mono">userId</span>
-								<span>1</span>
-								<span>Enabled</span>
-							</div>
-							<div class="grid grid-cols-[1.1fr_1fr_0.6fr] gap-2 rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-								<span class="font-mono">sort</span>
-								<span>desc</span>
-								<span>Optional</span>
-							</div>
-						</TabsContent>
-
-						<TabsContent value="headers" class="space-y-2">
-							<div class="rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-								<div class="flex items-center justify-between gap-3">
-									<span class="font-mono">accept</span>
-									<span>application/json</span>
-								</div>
-							</div>
-							<div class="rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-								<div class="flex items-center justify-between gap-3">
-									<span class="font-mono">x-demo-mode</span>
-									<span>guest</span>
-								</div>
-							</div>
-						</TabsContent>
-
-						<TabsContent value="body" class="space-y-3">
-							<div class="rounded-2xl border border-dashed border-border/80 bg-white p-4">
-								<p class="text-sm font-medium text-foreground">Body editor placeholder</p>
-								<p class="mt-1 text-xs leading-5 text-muted-foreground">
-									JSON, raw, and form modes will live here once request editing is wired.
-								</p>
-							</div>
-						</TabsContent>
-
-						<TabsContent value="auth" class="space-y-3">
-							<div class="flex items-center gap-3 rounded-2xl border border-border/70 bg-panel-soft p-4">
-								<LockIcon class="size-4 text-muted-foreground" />
-								<div>
-									<p class="text-sm font-medium text-foreground">Guest mode locked</p>
-									<p class="text-xs text-muted-foreground">
-										Bearer tokens and custom auth flows unlock after sign-in.
-									</p>
-								</div>
-							</div>
-						</TabsContent>
-					</Tabs>
-				</div>
-			</div>
-		</CardContent>
-	</Card>
-
-	<Card class="border-border/80 shadow-sm">
-		<CardHeader class="gap-3">
-			<div class="flex items-center justify-between gap-3">
-				<div>
-					<CardTitle>Response viewer</CardTitle>
-					<CardDescription>Preset response states for the workspace shell.</CardDescription>
-				</div>
-				<Badge variant="secondary">200 OK</Badge>
-			</div>
-			<div class="flex flex-wrap gap-2 text-xs text-muted-foreground">
-				<span class="rounded-full border border-border/70 bg-panel-soft px-3 py-1">186 ms</span>
-				<span class="rounded-full border border-border/70 bg-panel-soft px-3 py-1">1.2 KB</span>
-				<span class="rounded-full border border-border/70 bg-panel-soft px-3 py-1">application/json</span>
-			</div>
-		</CardHeader>
-
-		<CardContent class="space-y-4">
-			<div class="rounded-[22px] border border-border/70 bg-shell p-4">
-				<Tabs value="pretty" class="gap-4">
-					<TabsList>
-						<TabsTrigger value="pretty">Pretty</TabsTrigger>
-						<TabsTrigger value="raw">Raw</TabsTrigger>
-						<TabsTrigger value="headers">Headers</TabsTrigger>
-					</TabsList>
-
-					<TabsContent value="pretty" class="space-y-3">
-						<pre class="overflow-x-auto rounded-2xl border border-border/70 bg-slate-950 px-4 py-4 text-xs leading-6 text-slate-100"><code>{prettyResponse}</code></pre>
-					</TabsContent>
-
-					<TabsContent value="raw" class="space-y-3">
-						<div class="rounded-2xl border border-border/70 bg-panel-soft p-4 font-mono text-xs leading-6 text-foreground">
-							{rawResponse}
+		<div class="space-y-4">
+			<Card class="panel-card">
+				<CardHeader class="gap-3">
+					<div class="flex items-center justify-between gap-3">
+						<div>
+							<CardTitle>Session prompts</CardTitle>
+							<CardDescription>Shared copy for the guest lock and sign-in surfaces.</CardDescription>
 						</div>
-					</TabsContent>
-
-					<TabsContent value="headers" class="space-y-2">
-						{#each responseHeaders as [key, value]}
-							<div class="flex items-center justify-between gap-4 rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-								<span class="font-mono text-xs text-muted-foreground">{key}</span>
-								<span>{value}</span>
+						<Badge variant="secondary">{guestState.mode}</Badge>
+					</div>
+				</CardHeader>
+				<CardContent class="space-y-3">
+					{#each guestState.prompts as prompt}
+						<div class="rounded-[20px] border border-border/70 bg-panel-soft p-4">
+							<div class="flex items-center justify-between gap-3">
+								<p class="text-sm font-semibold text-text-strong">{prompt.title}</p>
+								<Badge
+									variant="outline"
+									class={metricToneClasses[prompt.tone]}
+								>
+									{prompt.action.label}
+								</Badge>
 							</div>
-						{/each}
-					</TabsContent>
-				</Tabs>
-			</div>
+							<p class="mt-2 text-sm leading-6 text-text-body">{prompt.body}</p>
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
 
-			<div class="rounded-2xl border border-dashed border-border/80 bg-white p-4">
-				<div class="flex items-center gap-2">
-					<ShieldIcon class="size-4 text-primary" />
-					<p class="text-sm font-medium text-foreground">Safety-aware routing</p>
-				</div>
-				<p class="mt-2 text-xs leading-5 text-muted-foreground">
-					The shell communicates the guest limit model without pretending that custom execution is live.
-				</p>
-			</div>
-		</CardContent>
-	</Card>
-</div>
+			<Card class="panel-card">
+				<CardHeader class="gap-3">
+					<CardTitle>Recent guest runs</CardTitle>
+					<CardDescription>Demo history stays visible, while persistence remains locked.</CardDescription>
+				</CardHeader>
+				<CardContent class="space-y-3">
+					{#each guestState.history.slice(0, 4) as entry}
+						<div class="rounded-[18px] border border-border/70 bg-panel-soft px-4 py-3">
+							<div class="flex items-start justify-between gap-3">
+								<div>
+									<p class="text-sm font-semibold text-text-strong">{entry.title}</p>
+									<p class="mt-1 font-mono text-xs text-text-muted">{entry.target}</p>
+								</div>
+								<Badge variant="outline" class={historyToneClasses[entry.outcome]}>
+									{entry.statusCode} {entry.statusText}
+								</Badge>
+							</div>
+							<div class="mt-3 flex flex-wrap gap-2 text-xs text-text-muted">
+								<span class="rounded-full border border-border/70 bg-white px-3 py-1">
+									{entry.durationMs} ms
+								</span>
+								<span class="rounded-full border border-border/70 bg-white px-3 py-1">
+									{entry.responseSizeLabel}
+								</span>
+								<span class="rounded-full border border-border/70 bg-white px-3 py-1">
+									{entry.timestampLabel}
+								</span>
+							</div>
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
 
-<div class="mt-4 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-	<Card class="border-border/80 shadow-sm">
-		<CardHeader class="flex-row items-center justify-between gap-3">
-			<div>
-				<CardTitle>Workspace rails</CardTitle>
-				<CardDescription>Collections, examples, and recent activity stay visible in the shell.</CardDescription>
-			</div>
-			<Badge variant="outline">Persistent</Badge>
-		</CardHeader>
-		<CardContent class="grid gap-3 sm:grid-cols-3">
-			<div class="rounded-2xl border border-border/70 bg-panel-soft p-4">
-				<div class="flex items-center gap-2">
-					<InboxIcon class="size-4 text-primary" />
-					<p class="text-sm font-medium text-foreground">Examples</p>
-				</div>
-				<p class="mt-2 text-xs leading-5 text-muted-foreground">JSONPlaceholder, GitHub, and weather demos.</p>
-			</div>
-			<div class="rounded-2xl border border-border/70 bg-panel-soft p-4">
-				<div class="flex items-center gap-2">
-					<LayoutGridIcon class="size-4 text-primary" />
-					<p class="text-sm font-medium text-foreground">Collections</p>
-				</div>
-				<p class="mt-2 text-xs leading-5 text-muted-foreground">Saved groups will appear here after auth lands.</p>
-			</div>
-			<div class="rounded-2xl border border-border/70 bg-panel-soft p-4">
-				<div class="flex items-center gap-2">
-					<Clock3Icon class="size-4 text-primary" />
-					<p class="text-sm font-medium text-foreground">History</p>
-				</div>
-				<p class="mt-2 text-xs leading-5 text-muted-foreground">Recent runs and response snapshots belong here.</p>
-			</div>
-		</CardContent>
-	</Card>
+			<Card class="panel-card">
+				<CardHeader class="gap-3">
+					<CardTitle>Quota snapshot</CardTitle>
+					<CardDescription>The guest limits from the docs are surfaced directly in the shell.</CardDescription>
+				</CardHeader>
+				<CardContent class="space-y-3">
+					{#each guestState.quotas.slice(0, 3) as quota}
+						<div class="rounded-[18px] border border-border/70 bg-panel-soft px-4 py-3">
+							<div class="flex items-center justify-between gap-3">
+								<p class="text-sm font-semibold text-text-strong">{quota.label}</p>
+								<Badge variant="outline">{quota.remainingLabel}</Badge>
+							</div>
+							<p class="mt-2 text-sm text-text-body">{quota.usedLabel} of {quota.limitLabel}</p>
+							<p class="mt-1 text-xs leading-5 text-text-muted">{quota.note}</p>
+						</div>
+					{/each}
+				</CardContent>
+			</Card>
+		</div>
+	</div>
 
-	<Card class="border-border/80 bg-gradient-to-br from-emerald-50 to-white shadow-sm">
+	<div class="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+		<GuestCustomUrlLock />
+		<GuestSaveLock />
+		<GuestHistoryLock />
+		<GuestEnvVarsLock />
+		<GuestAdvancedToolsLock />
+	</div>
+
+	<Card class="panel-card">
 		<CardHeader class="gap-3">
 			<div class="flex items-center justify-between gap-3">
 				<div>
-					<CardTitle>Guest lock state</CardTitle>
-					<CardDescription>Visible module, restricted action.</CardDescription>
+					<CardTitle>Workspace pulse</CardTitle>
+					<CardDescription>Shared metrics from the guest state model keep the shell grounded in the product rules.</CardDescription>
 				</div>
-				<Badge variant="secondary">Preview</Badge>
+				<Badge variant="outline">Guest mode</Badge>
 			</div>
 		</CardHeader>
-		<CardContent class="space-y-3">
-			<div class="flex items-start gap-3 rounded-2xl border border-border/70 bg-white p-4">
-				<LockIcon class="mt-0.5 size-4 text-muted-foreground" />
-				<div>
-					<p class="text-sm font-medium text-foreground">Custom target execution is locked</p>
-					<p class="mt-1 text-xs leading-5 text-muted-foreground">
-						Guests can inspect the full workspace, but only allowlisted endpoints should be runnable.
+		<CardContent class="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+			{#each guestState.metrics as metric}
+				<div class={`rounded-[20px] border px-4 py-4 ${metricToneClasses[metric.tone]}`}>
+					<p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-text-muted">
+						{metric.label}
 					</p>
+					<p class="mt-2 text-2xl font-semibold tracking-tight text-current">{metric.value}</p>
+					<p class="mt-1 text-sm text-text-body">{metric.detail}</p>
 				</div>
-			</div>
-			<Button variant="outline" class="w-full justify-between">
-				<span>Open sign-in flow</span>
-				<ArrowRightIcon class="size-4" />
-			</Button>
+			{/each}
 		</CardContent>
 	</Card>
-</div>
-
-<Separator class="my-4" />
-
-<div class="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-	<Card class="border-border/80 shadow-sm">
-		<CardHeader class="gap-2">
-			<CardTitle>Request metrics</CardTitle>
-			<CardDescription>Lightweight shell-level summaries for the workspace.</CardDescription>
-		</CardHeader>
-		<CardContent class="grid gap-3 sm:grid-cols-3">
-			<div class="rounded-2xl border border-border/70 bg-panel-soft p-4">
-				<p class="text-xs uppercase tracking-[0.24em] text-muted-foreground">Today</p>
-				<p class="mt-2 text-2xl font-semibold tracking-tight text-foreground">12</p>
-				<p class="text-xs text-muted-foreground">guest-safe sends</p>
-			</div>
-			<div class="rounded-2xl border border-border/70 bg-panel-soft p-4">
-				<p class="text-xs uppercase tracking-[0.24em] text-muted-foreground">Success</p>
-				<p class="mt-2 text-2xl font-semibold tracking-tight text-foreground">98%</p>
-				<p class="text-xs text-muted-foreground">preview responses</p>
-			</div>
-			<div class="rounded-2xl border border-border/70 bg-panel-soft p-4">
-				<p class="text-xs uppercase tracking-[0.24em] text-muted-foreground">Quota</p>
-				<p class="mt-2 text-2xl font-semibold tracking-tight text-foreground">8 left</p>
-				<p class="text-xs text-muted-foreground">before cooldown</p>
-			</div>
-		</CardContent>
-	</Card>
-
-	<Card class="border-border/80 shadow-sm">
-		<CardHeader class="gap-2">
-			<CardTitle>Navigation intent</CardTitle>
-			<CardDescription>The route structure matches the docs-led product map.</CardDescription>
-		</CardHeader>
-		<CardContent class="space-y-2">
-			<div class="flex items-center justify-between rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-				<span>/app</span>
-				<span class="text-muted-foreground">Shell + workspace</span>
-			</div>
-			<div class="flex items-center justify-between rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-				<span>/templates</span>
-				<span class="text-muted-foreground">Example collections</span>
-			</div>
-			<div class="flex items-center justify-between rounded-2xl border border-border/70 bg-panel-soft px-3 py-2 text-sm">
-				<span>/docs</span>
-				<span class="text-muted-foreground">Quick start</span>
-			</div>
-		</CardContent>
-	</Card>
-</div>
+</section>

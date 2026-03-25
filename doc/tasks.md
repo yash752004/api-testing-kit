@@ -97,6 +97,7 @@ Unblocks:
 
 ### A1. Theme Tokens And Global Styles
 Owner: `Agent Group A`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Translate `design-guideline.md` into Tailwind theme tokens.
@@ -128,6 +129,7 @@ Parallel With:
 
 ### A3. App Shell Layout
 Owner: `Agent Group A`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Build the shared shell for `/app`.
@@ -164,6 +166,7 @@ Parallel With:
 
 ### UX1. Guest Mode State Model
 Owner: `Agent Group B`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Define guest vs authenticated UI state on `/app`.
@@ -179,6 +182,7 @@ Parallel With:
 
 ### UX2. Request Builder UI
 Owner: `Agent Group B`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Implement method selector, URL bar, params, headers, auth, body, and send action.
@@ -196,6 +200,7 @@ Unblocks:
 
 ### UX3. Response Viewer UI
 Owner: `Agent Group B`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Implement pretty/raw/headers tabs.
@@ -208,6 +213,7 @@ Depends on:
 
 ### UX4. Guest Lock Surfaces
 Owner: `Agent Group B`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Add locked overlays for save, history persistence, env vars, custom URLs, and advanced tools.
@@ -219,6 +225,7 @@ Depends on:
 
 ### UX5. Templates And Example Collections UI
 Owner: `Agent Group B`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Build the templates browser and example request launch points.
@@ -285,6 +292,7 @@ Depends on:
 
 ### C5. Templates API
 Owner: `Agent Group C`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Serve guest-safe template collections.
@@ -429,6 +437,7 @@ Depends on:
 
 ### F1. Landing Page
 Owner: `Agent Group F`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Build the marketing landing page.
@@ -450,6 +459,7 @@ Depends on:
 
 ### F3. Features Page
 Owner: `Agent Group F`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Document product capabilities, guest limits, and authenticated unlocks.
@@ -459,6 +469,7 @@ Depends on:
 
 ### F4. Docs Page
 Owner: `Agent Group F`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Add quick start content and guest/auth usage guidance.
@@ -468,6 +479,7 @@ Depends on:
 
 ### F5. Case Study Page
 Owner: `Agent Group F`
+Status: `completed` on `2026-03-25`
 
 Scope:
 - Add architecture and engineering narrative.
